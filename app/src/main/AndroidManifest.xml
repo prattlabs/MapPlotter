@@ -45,10 +45,6 @@
                 android:name="org.apache.http.legacy"
                 android:required="false"/>
 
-        <activity
-                android:name=".MapActivity2"
-                android:label="@string/title_activity_map2">
-        </activity>
     </application>
 
 </manifest>
