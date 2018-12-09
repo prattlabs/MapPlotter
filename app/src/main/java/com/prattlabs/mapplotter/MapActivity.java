@@ -21,10 +21,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.graphics.Color.BLUE;
 
 @SuppressLint("MissingPermission")
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
@@ -41,6 +43,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     private boolean mRequestingLocationUpdates;
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest;
+    private Location mCurrentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,9 +140,24 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     }
 
     private void setLocation(Location location) {
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(latLng).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 20));
+        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        // Initial marker
+        if (mCurrentLocation == null) {
+            mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Start Marker!"));
+        } else {
+            LatLng previousLatLng = getLatLng(mCurrentLocation);
+            mMap.addPolyline(new PolylineOptions()
+                    .add(previousLatLng, currentLatLng)
+                    .color(BLUE)
+                    .width(25));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 20));
+        }
+        mCurrentLocation = location;
+    }
+
+    private LatLng getLatLng(Location location) {
+        return new LatLng(location.getLatitude(), location.getLongitude());
     }
 
     @Override
