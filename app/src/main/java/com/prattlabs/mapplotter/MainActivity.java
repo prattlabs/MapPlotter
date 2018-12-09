@@ -8,7 +8,10 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -21,20 +24,23 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import java.util.LinkedList;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.graphics.Color.BLUE;
 
 @SuppressLint("MissingPermission")
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener {
 
     private static final int REQUEST_LOCATION = 123;
     private static final String REQUESTING_LOCATION_UPDATES_KEY = "LOCATION_UPDATES";
     private static final long UPDATE_INTERVAL = 1;
     private static final long FASTEST_INTERVAL = 1;
+    private TextView mTextMessage;
     private GoogleMap mMap;
     private LocationManager locationManager;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -42,12 +48,49 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest;
     private Location mCurrentLocation;
+    private LinkedList<Polyline> polylines = new LinkedList<>();
+
+    private enum RecordState {
+        RECORD, PAUSE, STOP
+    }
+    private RecordState state = RecordState.STOP;
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnActionItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.record_route:
+                    mTextMessage.setText(R.string.title_record);
+                    state = RecordState.RECORD;
+                    return true;
+                case R.id.pause_route:
+                    state = RecordState.PAUSE;
+                    mTextMessage.setText(R.string.title_pause);
+                    return true;
+                case R.id.stop_route:
+                    state = RecordState.STOP;
+                    mCurrentLocation = null;
+                    mTextMessage.setText(R.string.title_stop);
+                    for (Polyline polyline : polylines) {
+                        polyline.remove();
+                    }
+                    return true;
+            }
+            return false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        updateValuesFromBundle(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mTextMessage = (TextView) findViewById(R.id.message);
+        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.actions);
+        navigation.setOnNavigationItemSelectedListener(mOnActionItemSelectedListener);
+
+        updateValuesFromBundle(savedInstanceState);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -60,7 +103,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                 for (Location location : locationResult.getLocations()) {
                     setLocation(location);
                 }
-            };
+            }
         };
     }
 
@@ -71,8 +114,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
         // Update the value of mRequestingLocationUpdates from the Bundle.
         if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
-            mRequestingLocationUpdates = savedInstanceState.getBoolean(
-                    REQUESTING_LOCATION_UPDATES_KEY);
+            mRequestingLocationUpdates = savedInstanceState.getBoolean(REQUESTING_LOCATION_UPDATES_KEY);
         }
 
         // ...
@@ -81,8 +123,27 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         // updateUI();
     }
 
-    private void initLocation(Location location) {
+    private void setLocation(Location location) {
+        if (state == RecordState.RECORD || mCurrentLocation == null) {
+            LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
 
+            // Initial marker
+            if (mCurrentLocation == null) {
+                mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Start Marker!"));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 20));
+            } else {
+                LatLng previousLatLng = getLatLng(mCurrentLocation);
+                Polyline polyline = mMap.addPolyline(new PolylineOptions().add(previousLatLng,
+                        currentLatLng).color(BLUE).width(25));
+                polylines.add(polyline);
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+            }
+            mCurrentLocation = location;
+        }
+    }
+
+    private LatLng getLatLng(Location location) {
+        return new LatLng(location.getLatitude(), location.getLongitude());
     }
 
     @Override
@@ -109,65 +170,32 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mMap = googleMap;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                initLocation();
+            if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                    ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                refreshLocation();
             } else {
-                if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION) ||
-                        shouldShowRequestPermissionRationale(ACCESS_COARSE_LOCATION)) {
+                if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION) || shouldShowRequestPermissionRationale(
+                        ACCESS_COARSE_LOCATION)) {
                     Toast.makeText(this, "Need location permissions to track your path", Toast.LENGTH_SHORT).show();
                 }
 
                 requestPermissions(new String[]{ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
             }
         }
-        initLocation();
+        refreshLocation();
     }
 
-    private void initLocation() {
+    private void refreshLocation() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
                 // Got last known location. In some rare situations this can be null.
                 if (location != null) {
-
-                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-                    // Initial marker
-                    if (mCurrentLocation == null) {
-                        mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Start Marker!"));
-                    } else {
-                        LatLng previousLatLng = getLatLng(mCurrentLocation);
-                        mMap.addPolyline(new PolylineOptions().add(previousLatLng,
-                                currentLatLng).color(BLUE).width(25));
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 20));
-                    }
-                    mCurrentLocation = location;
+                    setLocation(location);
                 }
             }
         });
-    }
-
-    private void setLocation(Location location) {
-        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-        // Initial marker
-        if (mCurrentLocation == null) {
-            mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Start Marker!"));
-        } else {
-            LatLng previousLatLng = getLatLng(mCurrentLocation);
-            mMap.addPolyline(new PolylineOptions()
-                    .add(previousLatLng, currentLatLng)
-                    .color(BLUE)
-                    .width(25));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 20));
-        }
-        mCurrentLocation = location;
-    }
-
-    private LatLng getLatLng(Location location) {
-        return new LatLng(location.getLatitude(), location.getLongitude());
     }
 
     @Override
@@ -189,16 +217,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mLocationRequest.setInterval(UPDATE_INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest,
-                mLocationCallback,
-                null /* Looper */);
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null /* Looper */);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                initLocation();
+                refreshLocation();
 
             } else {
                 Toast.makeText(this, "Location permissions not granted", Toast.LENGTH_SHORT).show();
