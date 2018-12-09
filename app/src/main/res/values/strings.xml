@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MapPlotter</string>
+    <string name="title_activity_map">Map</string>
+    <string name="title_activity_map2">Map</string>
+</resources>

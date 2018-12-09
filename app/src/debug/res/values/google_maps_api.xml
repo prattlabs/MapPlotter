@@ -1,0 +1,24 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=71:4E:BD:27:A5:F5:4C:60:0E:03:F1:BE:45:DF:25:A1:51:5B:3A:99%3Bcom.prattlabs.mapplotter
+
+    You can also add your credentials to an existing key, using these values:
+
+    Package name:
+    71:4E:BD:27:A5:F5:4C:60:0E:03:F1:BE:45:DF:25:A1:51:5B:3A:99
+
+    SHA-1 certificate fingerprint:
+    71:4E:BD:27:A5:F5:4C:60:0E:03:F1:BE:45:DF:25:A1:51:5B:3A:99
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">AIzaSyDPCwD-LuCTjloMq3Clk4vETHOtJl0y9TQ</string>
+</resources>
