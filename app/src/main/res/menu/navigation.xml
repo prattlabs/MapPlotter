@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+            android:id="@+id/record_route"
+            android:icon="@drawable/ic_record"
+            android:title="@string/title_record"/>
+
+    <item
+            android:id="@+id/pause_route"
+            android:icon="@drawable/ic_pause"
+            android:title="@string/title_pause"/>
+
+    <item
+            android:id="@+id/stop_route"
+            android:icon="@drawable/ic_stop"
+            android:title="@string/title_stop"/>
+
+</menu>

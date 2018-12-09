@@ -35,8 +35,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     private static final String REQUESTING_LOCATION_UPDATES_KEY = "LOCATION_UPDATES";
     private static final long UPDATE_INTERVAL = 1;
     private static final long FASTEST_INTERVAL = 1;
-    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     private GoogleMap mMap;
     private LocationManager locationManager;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -83,7 +81,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         // updateUI();
     }
 
-    private void refreshLocation(Location location) {
+    private void initLocation(Location location) {
 
     }
 
@@ -113,7 +111,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                refreshLocation();
+                initLocation();
             } else {
                 if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION) ||
                         shouldShowRequestPermissionRationale(ACCESS_COARSE_LOCATION)) {
@@ -123,17 +121,29 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                 requestPermissions(new String[]{ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
             }
         }
-        refreshLocation();
+        initLocation();
     }
 
-    private void refreshLocation() {
+    private void initLocation() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
                 // Got last known location. In some rare situations this can be null.
                 if (location != null) {
-                    setLocation(location);
+
+                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+                    // Initial marker
+                    if (mCurrentLocation == null) {
+                        mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Start Marker!"));
+                    } else {
+                        LatLng previousLatLng = getLatLng(mCurrentLocation);
+                        mMap.addPolyline(new PolylineOptions().add(previousLatLng,
+                                currentLatLng).color(BLUE).width(25));
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 20));
+                    }
+                    mCurrentLocation = location;
                 }
             }
         });
@@ -188,7 +198,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                refreshLocation();
+                initLocation();
 
             } else {
                 Toast.makeText(this, "Location permissions not granted", Toast.LENGTH_SHORT).show();

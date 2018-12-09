@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- "Play", should appear as action button if possible -->
+    <item
+            android:id="@+id/action_play"
+            android:icon="@drawable/ic_play_arrow_black_24dp"
+            android:title="@string/action_play"
+            app:showAsAction="ifRoom"/>
+
+    <!-- "Stop", should appear as action button if possible -->
+    <item
+            android:id="@+id/action_stop"
+            android:icon="@drawable/ic_stop"
+            android:title="@string/action_stop"
+            app:showAsAction="ifRoom"/>
+
+    <!-- Settings, should always be in the overflow -->
+    <item android:id="@+id/action_settings"
+          android:title="@string/action_settings"
+          app:showAsAction="never"/>
+</menu>
