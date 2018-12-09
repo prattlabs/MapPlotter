@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="stop_fab_margin">34dp</dimen>
+</resources>
