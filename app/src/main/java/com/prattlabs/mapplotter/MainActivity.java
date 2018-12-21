@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final long FASTEST_INTERVAL = 1;
     private TextView mTextMessage;
     private GoogleMap mMap;
-    private LocationManager locationManager;
     private FusedLocationProviderClient mFusedLocationClient;
     private boolean mRequestingLocationUpdates;
     private LocationCallback mLocationCallback;
@@ -168,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
